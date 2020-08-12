@@ -232,6 +232,20 @@ typedef struct sink_metadata {
     struct record_track_metadata* tracks;
 } sink_metadata_t;
 
+/* HAL version 3.2 and higher only. */
+typedef struct source_metadata_v7 {
+  size_t track_count;
+  /** Array of metadata of each track connected to this source. */
+  struct playback_track_metadata_v7* tracks;
+} source_metadata_v7_t;
+
+/* HAL version 3.2 and higher only. */
+typedef struct sink_metadata_v7 {
+  size_t track_count;
+  /** Array of metadata of each track connected to this sink. */
+  struct record_track_metadata_v7* tracks;
+} sink_metadata_v7_t;
+  
 /**
  * audio_stream_out is the abstraction interface for the audio output hardware.
  *
@@ -436,6 +450,88 @@ struct audio_stream_out {
     int (*set_event_callback)(struct audio_stream_out *stream,
                               stream_event_callback_t callback,
                               void *cookie);
+
+    /**
+     * Called when the metadata of the stream's source has been changed.
+     * HAL version 3.2 and higher only.
+     * @param source_metadata Description of the audio that is played by the clients.
+     */
+    void (*update_source_metadata_v7)(struct audio_stream_out *stream,
+                                      const struct source_metadata_v7* source_metadata);
+
+    /**
+     * Returns the Dual Mono mode presentation setting.
+     *
+     * \param[in] stream the stream object.
+     * \param[out] mode current setting of Dual Mono mode.
+     *
+     * \return 0 if the position is successfully returned.
+     *         -EINVAL if the arguments are invalid
+     *         -ENOSYS if the function is not available
+     */
+    int (*get_dual_mono_mode)(struct audio_stream_out *stream, audio_dual_mono_mode_t *mode);
+
+    /**
+     * Sets the Dual Mono mode presentation on the output device.
+     *
+     * \param[in] stream the stream object.
+     * \param[in] mode selected Dual Mono mode.
+     *
+     * \return 0 in case of success.
+     *         -EINVAL if the arguments are invalid
+     *         -ENOSYS if the function is not available
+     */
+    int (*set_dual_mono_mode)(struct audio_stream_out *stream, const audio_dual_mono_mode_t mode);
+
+    /**
+     * Returns the Audio Description Mix level in dB.
+     *
+     * \param[in] stream the stream object.
+     * \param[out] leveldB the current Audio Description Mix Level in dB.
+     *
+     * \return 0 in case of success.
+     *         -EINVAL if the arguments are invalid
+     *         -ENOSYS if the function is not available
+     */
+    int (*get_audio_description_mix_level)(struct audio_stream_out *stream, float *leveldB);
+
+    /**
+     * Sets the Audio Description Mix level in dB.
+     *
+     * \param[in] stream the stream object.
+     * \param[in] leveldB Audio Description Mix Level in dB.
+     *
+     * \return 0 in case of success.
+     *         -EINVAL if the arguments are invalid
+     *         -ENOSYS if the function is not available
+     */
+    int (*set_audio_description_mix_level)(struct audio_stream_out *stream, const float leveldB);
+
+    /**
+     * Retrieves current playback rate parameters.
+     *
+     * \param[in] stream the stream object.
+     * \param[out] playbackRate current playback parameters.
+     *
+     * \return 0 in case of success.
+     *         -EINVAL if the arguments are invalid
+     *         -ENOSYS if the function is not available
+     */
+    int (*get_playback_rate_parameters)(struct audio_stream_out *stream,
+                                        audio_playback_rate_t *playbackRate);
+
+    /**
+     * Sets the playback rate parameters that control playback behavior.
+     *
+     * \param[in] stream the stream object.
+     * \param[in] playbackRate playback parameters.
+     *
+     * \return 0 in case of success.
+     *         -EINVAL if the arguments are invalid
+     *         -ENOSYS if the function is not available
+     */
+    int (*set_playback_rate_parameters)(struct audio_stream_out *stream,
+                                        const audio_playback_rate_t *playbackRate);
 };
 typedef struct audio_stream_out audio_stream_out_t;
 
