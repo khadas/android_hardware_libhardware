@@ -15,7 +15,7 @@
  */
 
 #define LOG_TAG "modules.usbaudio.audio_hal"
-/* #define LOG_NDEBUG 0 */
+#define LOG_NDEBUG 0
 
 #include <errno.h>
 #include <inttypes.h>
@@ -140,6 +140,7 @@ struct stream_in {
                                          * they could come from here too if
                                          * there was a previous conversion */
     size_t conversion_buffer_size;      /* in bytes */
+    bool device_connected;
 };
 
 /*
@@ -845,6 +846,10 @@ static ssize_t in_read(struct audio_stream_in *stream, void* buffer, size_t byte
             goto err;
         }
         in->standby = false;
+        in->device_connected = true;
+    }
+    if (in->device_connected == false) {
+        goto err;
     }
 
     /*
@@ -871,6 +876,11 @@ static ssize_t in_read(struct audio_stream_in *stream, void* buffer, size_t byte
     }
 
     ret = proxy_read(&in->proxy, read_buff, num_read_buff_bytes);
+    if (ret == -19) {
+       in->device_connected = false;
+    }
+    ALOGI("in_read ret %d ",ret);
+
     if (ret == 0) {
         if (num_device_channels != num_req_channels) {
             // ALOGV("chans dev:%d req:%d", num_device_channels, num_req_channels);
