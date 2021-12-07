@@ -24,6 +24,7 @@
 #include <hardware/hardware.h>
 #include <system/audio.h>
 #include <cutils/native_handle.h>
+#include <vector>
 
 __BEGIN_DECLS
 
@@ -85,6 +86,8 @@ typedef struct tv_input_device_info {
 
     /* Type of physical TV input. */
     tv_input_type_t type;
+
+    int32_t buffSeq;
 
     union {
         struct {
@@ -197,6 +200,8 @@ typedef struct tv_input_capture_result {
     /* Sequence number of the request */
     uint32_t seq;
 
+    uint64_t buff_id;
+
     /*
      * The buffer passed to hardware in request_capture(). The content of
      * buffer is undefined (although buffer itself is valid) for
@@ -250,6 +255,7 @@ enum {
 typedef uint32_t tv_stream_type_t;
 
 typedef struct tv_stream_config {
+    int32_t device_id;
     /*
      * ID number of the stream. This value is used to identify the whole stream
      * configuration.
@@ -262,6 +268,11 @@ typedef struct tv_stream_config {
     /* Max width/height of the stream. */
     uint32_t max_video_width;
     uint32_t max_video_height;
+    uint64_t usage;
+    uint32_t format;
+    uint32_t width;
+    uint32_t height;
+    uint32_t buffCount;
 } tv_stream_config_t;
 
 typedef struct buffer_producer_stream {
@@ -296,6 +307,27 @@ typedef struct tv_stream {
         buffer_producer_stream_t buffer_producer;
     };
 } tv_stream_t;
+
+typedef struct tv_stream_preview_buff{
+    uint64_t bufferId;
+    buffer_handle_t buffer;
+} tv_stream_preview_buff_t;
+
+typedef struct tv_stream_preview_request {
+    int32_t deviceId;
+    int32_t streamId;
+    int32_t top;
+    int32_t left;
+    int32_t width;
+    int32_t height;
+    std::vector<tv_stream_preview_buff_t> input_buffers;
+} tv_stream_preview_request_t;
+
+typedef struct tv_stream_preview_result {
+    int32_t deviceId;
+    int32_t streamId;
+    std::vector<tv_stream_preview_buff_t> output_buffers;
+} tv_stream_preview_result_t;
 
 /*
  * Every device data structure must begin with hw_device_t
@@ -383,7 +415,7 @@ typedef struct tv_input_device {
      * additional requests until it releases a buffer.
      */
     int (*request_capture)(struct tv_input_device* dev, int device_id,
-            int stream_id, buffer_handle_t buffer, uint32_t seq);
+            int stream_id, uint64_t buff_id, buffer_handle_t buffer, uint32_t seq);
 
     /*
      * cancel_capture:
@@ -396,6 +428,11 @@ typedef struct tv_input_device {
      */
     int (*cancel_capture)(struct tv_input_device* dev, int device_id,
             int stream_id, uint32_t seq);
+
+    int (*set_preview_info)(int32_t deviceId, int32_t streamId,
+            int32_t top, int32_t left, int32_t width, int32_t height, int32_t extInfo);
+
+    int (*set_preview_buffer)(buffer_handle_t buffer, uint64_t bufferId);
 
     void* reserved[16];
 } tv_input_device_t;
