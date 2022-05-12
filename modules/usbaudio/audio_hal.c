@@ -1680,10 +1680,16 @@ static int adev_create_audio_patch(struct audio_hw_device *dev,
     if (!wasStandby) {
         device_lock(adev);
         if (in != NULL) {
-            start_input_stream(in);
+            ret = start_input_stream(in);
+            if (ret == 0) {
+                in->standby = false;
+            }
         }
         if (out != NULL) {
-            start_output_stream(out);
+            ret = start_output_stream(out);
+            if (ret == 0) {
+                out->standby = false;
+            }
         }
         device_unlock(adev);
     }
