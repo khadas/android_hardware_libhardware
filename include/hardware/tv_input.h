@@ -187,6 +187,8 @@ enum {
      * request_capture(), or a request cancellation.
      */
     TV_INPUT_EVENT_CAPTURE_FAILED = 5,
+
+    TV_INPUT_EVENT_PRIV_CMD_TO_APP = 6,
 };
 typedef uint32_t tv_input_event_type_t;
 
@@ -216,8 +218,14 @@ typedef struct tv_input_capture_result {
     int error_code;
 } tv_input_capture_result_t;
 
+typedef struct tv_input_priv_app_cmd {
+    std::string action;
+    std::map<std::string, std::string> data;
+} tv_input_priv_app_cmd_t;
+
 typedef struct tv_input_event {
     tv_input_event_type_t type;
+    tv_input_priv_app_cmd_t priv_app_cmd;
 
     union {
         /*
@@ -393,6 +401,8 @@ typedef struct tv_input_device {
      */
     int (*close_stream)(struct tv_input_device* dev, int device_id,
             int stream_id);
+
+    int (*priv_cmd_from_app)(const std::string action, const std::map<std::string, std::string> data);
 
     /*
      * request_capture:
