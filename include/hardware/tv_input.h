@@ -25,6 +25,7 @@
 #include <system/audio.h>
 #include <cutils/native_handle.h>
 #include <vector>
+#include <string>
 
 __BEGIN_DECLS
 
