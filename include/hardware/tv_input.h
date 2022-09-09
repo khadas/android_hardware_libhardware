@@ -24,6 +24,8 @@
 #include <hardware/hardware.h>
 #include <system/audio.h>
 #include <cutils/native_handle.h>
+#include <vector>
+#include <string>
 
 __BEGIN_DECLS
 
@@ -184,6 +186,8 @@ enum {
      * request_capture(), or a request cancellation.
      */
     TV_INPUT_EVENT_CAPTURE_FAILED = 5,
+
+    TV_INPUT_EVENT_PRIV_CMD_TO_APP = 6,
 };
 typedef uint32_t tv_input_event_type_t;
 
@@ -211,6 +215,12 @@ typedef struct tv_input_capture_result {
     int error_code;
 } tv_input_capture_result_t;
 
+typedef struct tv_input_priv_app_cmd {
+    int device_id;
+    std::string action;
+    std::map<std::string, std::string> data;
+} tv_input_priv_app_cmd_t;
+
 typedef struct tv_input_event {
     tv_input_event_type_t type;
 
@@ -227,6 +237,11 @@ typedef struct tv_input_event {
          * TV_INPUT_EVENT_CAPTURE_FAILED: all fields are relevant
          */
         tv_input_capture_result_t capture_result;
+
+        /*
+         * @kenjc extend event type: priv_app_cmd
+         */
+        tv_input_priv_app_cmd_t priv_app_cmd;
     };
 } tv_input_event_t;
 
@@ -264,6 +279,16 @@ typedef struct tv_stream_config {
     uint32_t max_video_height;
 } tv_stream_config_t;
 
+typedef struct tv_stream_config_ext {
+    tv_stream_config_t base_config;
+    int32_t device_id;
+    uint64_t usage;
+    uint32_t format;
+    uint32_t width;
+    uint32_t height;
+    uint32_t buffCount;
+} tv_stream_config_ext_t;
+
 typedef struct buffer_producer_stream {
     /*
      * IN/OUT: Width / height of the stream. Client may request for specific
@@ -296,6 +321,27 @@ typedef struct tv_stream {
         buffer_producer_stream_t buffer_producer;
     };
 } tv_stream_t;
+
+typedef struct tv_stream_preview_buff {
+    uint64_t bufferId;
+    buffer_handle_t buffer;
+} tv_stream_preview_buff_t;
+
+typedef struct tv_stream_preview_request {
+    int32_t deviceId;
+    int32_t streamId;
+    int32_t top;
+    int32_t left;
+    int32_t width;
+    int32_t height;
+    std::vector<tv_stream_preview_buff_t> input_buffers;
+} tv_stream_preview_request_t;
+
+typedef struct tv_stream_preview_result {
+    int32_t deviceId;
+    int32_t streamId;
+    std::vector<tv_stream_preview_buff_t> output_buffers;
+} tv_stream_preview_result_t;
 
 /*
  * Every device data structure must begin with hw_device_t
@@ -397,7 +443,21 @@ typedef struct tv_input_device {
     int (*cancel_capture)(struct tv_input_device* dev, int device_id,
             int stream_id, uint32_t seq);
 
-    void* reserved[16];
+    /*
+     * Rockchip extend functions
+     */
+    int (*request_capture_ext)(struct tv_input_device* dev, int device_id,
+            int stream_id, uint64_t buff_id, buffer_handle_t buffer, uint32_t seq);
+    int (*get_stream_configurations_ext)(const struct tv_input_device* dev,
+            int device_id, int* num_configurations,
+            const tv_stream_config_ext_t** configs);
+    int (*set_preview_info)(int32_t device_id, int32_t stream_id,
+            int32_t top, int32_t left, int32_t width, int32_t height, int32_t ext_info);
+    int (*set_preview_buffer)(buffer_handle_t buffer, uint64_t buffer_id);
+    int (*priv_cmd_from_app)(const std::string action, const std::map<std::string, std::string> data);
+    // Align memory, unused function
+    int (*set_placeholder)(int32_t device_id);
+    void* reserved[10];
 } tv_input_device_t;
 
 __END_DECLS
