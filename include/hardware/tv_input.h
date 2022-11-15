@@ -237,13 +237,13 @@ typedef struct tv_input_event {
          * TV_INPUT_EVENT_CAPTURE_FAILED: all fields are relevant
          */
         tv_input_capture_result_t capture_result;
-
-        /*
-         * @kenjc extend event type: priv_app_cmd
-         */
-        tv_input_priv_app_cmd_t priv_app_cmd;
     };
 } tv_input_event_t;
+
+typedef struct tv_input_event_ext {
+    tv_input_event base_event;
+    tv_input_priv_app_cmd_t priv_app_cmd;
+} tv_input_event_ext_t;
 
 typedef struct tv_input_callback_ops {
     /*
@@ -257,6 +257,19 @@ typedef struct tv_input_callback_ops {
     void (*notify)(struct tv_input_device* dev,
             tv_input_event_t* event, void* data);
 } tv_input_callback_ops_t;
+
+typedef struct tv_input_callback_ops_ext {
+    /*
+     * event contains the type of the event and additional data if necessary.
+     * The event object is guaranteed to be valid only for the duration of the
+     * call.
+     *
+     * data is an object supplied at device initialization, opaque to the
+     * hardware.
+     */
+    void (*notify_ext)(struct tv_input_device* dev,
+            tv_input_event_ext_t* event, void* data);
+} tv_input_callback_ops_ext_t;
 
 enum {
     TV_STREAM_TYPE_INDEPENDENT_VIDEO_SOURCE = 1,
@@ -446,6 +459,8 @@ typedef struct tv_input_device {
     /*
      * Rockchip extend functions
      */
+    int (*initialize_ext)(struct tv_input_device* dev,
+            const tv_input_callback_ops_ext_t* callback, void* data);
     int (*request_capture_ext)(struct tv_input_device* dev, int device_id,
             int stream_id, uint64_t buff_id, buffer_handle_t buffer, uint32_t seq);
     int (*get_stream_configurations_ext)(const struct tv_input_device* dev,
@@ -457,7 +472,7 @@ typedef struct tv_input_device {
     int (*priv_cmd_from_app)(const std::string action, const std::map<std::string, std::string> data);
     // Align memory, unused function
     int (*set_placeholder)(int32_t device_id);
-    void* reserved[10];
+    void* reserved[9];
 } tv_input_device_t;
 
 __END_DECLS
