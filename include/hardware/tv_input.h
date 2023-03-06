@@ -243,6 +243,7 @@ typedef struct tv_input_event {
 typedef struct tv_input_event_ext {
     tv_input_event base_event;
     tv_input_priv_app_cmd_t priv_app_cmd;
+    uint64_t buff_id;
 } tv_input_event_ext_t;
 
 typedef struct tv_input_callback_ops {
