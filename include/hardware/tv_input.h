@@ -336,6 +336,11 @@ typedef struct tv_stream {
     };
 } tv_stream_t;
 
+typedef struct tv_stream_ext {
+    tv_stream_t base_stream;
+    native_handle_t* sideband_cancel_stream_source_handle;
+} tv_stream_ext_t;
+
 typedef struct tv_stream_preview_buff {
     uint64_t bufferId;
     buffer_handle_t buffer;
@@ -473,7 +478,9 @@ typedef struct tv_input_device {
     int (*priv_cmd_from_app)(const std::string action, const std::map<std::string, std::string> data);
     // Align memory, unused function
     int (*set_placeholder)(int32_t device_id);
-    void* reserved[9];
+    int (*open_stream_ext)(struct tv_input_device* dev, int device_id,
+            tv_stream_ext_t* stream);
+    void* reserved[8];
 } tv_input_device_t;
 
 __END_DECLS
